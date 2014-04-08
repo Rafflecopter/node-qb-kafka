@@ -1,0 +1,28 @@
+{
+  "name": "qb-kafka",
+  "version": "0.1.0",
+  "description": "kafka backend and dialect for QB",
+  "main": "index.js",
+  "scripts": {
+    "test": "nodeunit tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/Rafflecopter/node-qb-kafka"
+  },
+  "keywords": [
+    "qb",
+    "kafka"
+  ],
+  "author": "Jon Eisen <jon@rafflecopter.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Rafflecopter/node-qb-kafka/issues"
+  },
+  "homepage": "https://github.com/Rafflecopter/node-qb-kafka",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "qb": "~0"
+  }
+}
