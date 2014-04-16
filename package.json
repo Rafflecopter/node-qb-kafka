@@ -14,7 +14,7 @@
     "qb",
     "kafka"
   ],
-  "author": "Jon Eisen <jon@rafflecopter.com>",
+  "author": "Justin Ratner <justin@rafflecopter.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Rafflecopter/node-qb-kafka/issues"
@@ -25,6 +25,6 @@
     "lodash":           "2.4.1"
   },
   "devDependencies": {
-    "qb": "~0"
+    "qb": "~1.0.0"
   }
 }
