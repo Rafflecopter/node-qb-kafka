@@ -9,8 +9,8 @@ var qbPkg = require('qb')
 
 var qb1, qb2;
 
-var connectionString = "localhost:2181"
-//var connectionString = "dev.raafl.com:2181"
+//var connectionString = "localhost:2181"
+var connectionString = "dev.raafl.com:2181"
 
 // If we are getting a test.done complaint, turn this on. It helps find errors
 process.on('uncaughtException', function (err) {
@@ -29,6 +29,7 @@ tests.setUp = function (cb) {
     , connection_string: connectionString
     , task_options: { foobar: { topic: "foobar"
                               , consumer_group: "foobarers"
+                              , key: "foo"
                               }
                     }
     })
@@ -41,27 +42,31 @@ tests.tearDown = function (cb) {
 }
 
 tests.basic = function basic (test) {
-  test.expect(5)
+  //test.expect(5)
+  console.log('running basic')
   var called = false;
   qb1.on('error', test.ifError)
      .can('foobar', function (task, done) {
+       console.log('process')
        test.equal(task.foo, 'bar');
        called = true;
        done();
      })
      .post('process')
        .use(function (type, task, next) {
+         console.log('finished processing')
          test.equal(type, 'foobar');
          test.equal(task.foo, 'bar');
          test.equal(called, true);
          next();
        })
      .on('finish', function (type, task, next) {
+       console.log('finish')
        setImmediate(test.done);
      })
-     .start()
-
      .on('ready', function () {
+       console.log('push')
        qb1.push('foobar', {foo: 'bar'}, test.ifError);
      })
+     .start()
 }
