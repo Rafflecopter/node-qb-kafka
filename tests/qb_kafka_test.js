@@ -1,5 +1,5 @@
 // qb_kafa_tests.js
-// require('longjohn')
+require('longjohn')
 
 var _ = require('lodash')
   , kafka = require('kafka-node')
@@ -29,8 +29,12 @@ tests.setUp = function (cb) {
     , connection_string: connectionString
     , task_options: { foobar: { topic: "foobar"
                               , consumer_group: "foobarers"
-                              , key: "foo"
+                              //, key: "foo"
                               }
+                    , foobar2:  { topic: "foobar"
+                                , consumer_group: "foobar2ers"
+                                , key: "foo"
+                                }
                     }
     })
 
@@ -42,31 +46,34 @@ tests.tearDown = function (cb) {
 }
 
 tests.basic = function basic (test) {
-  //test.expect(5)
-  console.log('running basic')
-  var called = false;
+  test.expect(8)
+  var calledFoobar = false;
+  var calledFoobar2 = false;
   qb1.on('error', test.ifError)
      .can('foobar', function (task, done) {
-       console.log('process')
        test.equal(task.foo, 'bar');
-       called = true;
+       calledFoobar = true;
+       done();
+     })
+     .can('foobar2', function (task, done) {
+       test.equal(task.foo, 'bar');
+       calledFoobar2 = true;
        done();
      })
      .post('process')
        .use(function (type, task, next) {
-         console.log('finished processing')
-         test.equal(type, 'foobar');
          test.equal(task.foo, 'bar');
-         test.equal(called, true);
+         test.equal((type == 'foobar' ? calledFoobar : calledFoobar2), true);
          next();
        })
      .on('finish', function (type, task, next) {
-       console.log('finish')
-       setImmediate(test.done);
+       if (calledFoobar && calledFoobar2) {
+        setImmediate(test.done);
+       }
      })
      .on('ready', function () {
-       console.log('push')
        qb1.push('foobar', {foo: 'bar'}, test.ifError);
+       qb1.push('foobar2', {foo: 'bar'}, test.ifError)
      })
      .start()
 }
