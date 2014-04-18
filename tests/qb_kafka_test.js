@@ -9,8 +9,8 @@ var qbPkg = require('qb')
 
 var qb1, qb2;
 
-//var connectionString = "localhost:2181"
-var connectionString = "dev.raafl.com:2181"
+var connectionString = "localhost:2181"
+//var connectionString = "dev.raafl.com:2181"
 
 // If we are getting a test.done complaint, turn this on. It helps find errors
 process.on('uncaughtException', function (err) {
@@ -45,29 +45,31 @@ tests.tearDown = function (cb) {
   qb1 && qb1.end(cb)
 }
 
+// starting with a "clean" topic (no offset lag) push and process 2 messages
 tests.basic = function basic (test) {
-  test.expect(8)
-  var calledFoobar = false;
-  var calledFoobar2 = false;
+  test.expect(10)
+  var calledFoobar = 0;
+  var calledFoobar2 = 0;
   qb1.on('error', test.ifError)
      .can('foobar', function (task, done) {
+       console.log('foobar', task)
        test.equal(task.foo, 'bar');
-       calledFoobar = true;
+       calledFoobar++
        done();
      })
      .can('foobar2', function (task, done) {
+       console.log('foobar2', task)
        test.equal(task.foo, 'bar');
-       calledFoobar2 = true;
+       calledFoobar2++
        done();
      })
      .post('process')
        .use(function (type, task, next) {
          test.equal(task.foo, 'bar');
-         test.equal((type == 'foobar' ? calledFoobar : calledFoobar2), true);
          next();
        })
      .on('finish', function (type, task, next) {
-       if (calledFoobar && calledFoobar2) {
+       if (calledFoobar === 2 && calledFoobar2 === 2) {
         setImmediate(test.done);
        }
      })
