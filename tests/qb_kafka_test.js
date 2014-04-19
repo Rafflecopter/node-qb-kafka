@@ -4,7 +4,7 @@ process.on('uncaughtException', function(err) {
   console.error(err.stack);
 });
 process.setMaxListeners(0);
-require('longjohn')
+//require('longjohn')
 
 var _ = require('lodash')
   , kafka = require('kafka-node')
