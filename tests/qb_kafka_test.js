@@ -1,22 +1,22 @@
 // qb_kafa_tests.js
+// If we are getting a test.done complaint, turn this on. It helps find errors
+process.on('uncaughtException', function(err) {
+  console.error(err.stack);
+});
+process.setMaxListeners(0);
 require('longjohn')
 
 var _ = require('lodash')
   , kafka = require('kafka-node')
+  , async = require('async')
 
 var qbPkg = require('qb')
   , QB = qbPkg.backend(require('../lib/backend'))
 
-var qb1, qb2;
+var qb1, qb2, qb3;
 
-var connectionString = "localhost:2181"
-//var connectionString = "dev.raafl.com:2181"
-
-// If we are getting a test.done complaint, turn this on. It helps find errors
-process.on('uncaughtException', function (err) {
-  console.error(err.stack);
-});
-process.setMaxListeners(100);
+//var connectionString = "localhost:2181"
+var connectionString = "dev.raafl.com:2181"
 
 var tests = exports.tests = {};
 
@@ -36,13 +36,44 @@ tests.setUp = function (cb) {
                                 , key: "foo"
                                 }
                     }
+    , prefix: 'qbBasic'
+    })
+
+  qb2 = QB(
+    { instance_id: 0
+    , num_instances: 2
+    , num_partitions: 32
+    , commitInterval: 1
+    , connection_string: connectionString
+    , task_options: { foobar: { topic: "foobar32"
+                              , consumer_group: "foobarers"
+                              //, key: "foo"
+                              }
+                    }
+    , prefix: 'qbMulti1'
+    })
+
+  qb3 = QB(
+    { instance_id: 1
+    , num_instances: 2
+    , num_partitions: 32
+    , commitInterval: 1
+    , connection_string: connectionString
+    , task_options: { foobar: { topic: "foobar32"
+                              , consumer_group: "foobarers"
+                              //, key: "foo"
+                              }
+                    }
+    , prefix: 'qbMulti2'
     })
 
   cb()
 }
 
 tests.tearDown = function (cb) {
-  qb1 && qb1.end(cb)
+  var enders = ([qb1,qb2,qb3]).map(function (qb) { return qb.end.bind(qb) })
+
+  async.parallel(enders, cb)
 }
 
 // starting with a "clean" topic (no offset lag) push and process 2 messages
@@ -52,13 +83,11 @@ tests.basic = function basic (test) {
   var calledFoobar2 = 0;
   qb1.on('error', test.ifError)
      .can('foobar', function (task, done) {
-       console.log('foobar', task)
        test.equal(task.foo, 'bar');
        calledFoobar++
        done();
      })
      .can('foobar2', function (task, done) {
-       console.log('foobar2', task)
        test.equal(task.foo, 'bar');
        calledFoobar2++
        done();
@@ -78,4 +107,40 @@ tests.basic = function basic (test) {
        qb1.push('foobar2', {foo: 'bar'}, test.ifError)
      })
      .start()
+}
+
+tests.multiPartition = function multiPartition(test) {
+  var numProcessed = 0
+    , numToSend = 64
+
+  function _process(task, done) {
+    numProcessed++
+    done()
+  }
+
+  function _checkFinish() {
+    if (numProcessed === numToSend) {
+      return setImmediate(test.done)
+    } else {
+      return
+    }
+  }
+
+  qb2
+    .on('error', test.ifError)
+    .can('foobar', _process)
+    .on('finish', _checkFinish)
+    .on('ready', test.ifError)
+    .start()
+
+  qb3
+    .on('error', test.ifError)
+    .can('foobar', _process)
+    .on('ready', function () {
+      for (var k = 0; k < numToSend; k++) {
+        qb2.push('foobar', {foo: 'bar'}, test.ifError)
+      }
+    })
+    .on('finish', _checkFinish)
+    .start()
 }
