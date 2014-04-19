@@ -1,7 +1,11 @@
 install:
-  - curl https://www.apache.org/dyn/closer.cgi?path=/kafka/0.8.1/kafka_2.9.2-0.8.1.tgz > kafka.tgz
+  - curl http://www.bizdirusa.com/mirrors/apache/kafka/0.8.1/kafka_2.9.2-0.8.1.tgz > kafka.tgz
   - tar -xzf kafka.tgz
-  - cd kafka && bin/zookeeper-server-start.sh config/zookeeper.properties &
+  - cd kafka
+  - ./bin/zookeeper-server-start.sh config/zookeeper.properties &
+  - ./bin/kafka-server-start.sh config/server.properties &
+  - ./bin/kafka-topics.sh --zookeeper localhost:2181 --topic foobar32 --partitions 32 --replication-factor 1 --create
+  - cd ../
 language: java
 before_script:
   - npm install -g nodeunit
