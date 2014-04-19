@@ -109,6 +109,8 @@ tests.basic = function basic (test) {
      .start()
 }
 
+// In order for this test to pass, a topic called foobar32 
+// needs to be set up with 32 partitions
 tests.multiPartition = function multiPartition(test) {
   var numProcessed = 0
     , numToSend = 64
