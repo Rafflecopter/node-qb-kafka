@@ -15,8 +15,8 @@ var qbPkg = require('qb')
 
 var qb1, qb2, qb3;
 
-//var connectionString = "localhost:2181"
-var connectionString = "dev.raafl.com:2181"
+var connectionString = "localhost:2181"
+//var connectionString = "dev.raafl.com:2181"
 
 var tests = exports.tests = {};
 
