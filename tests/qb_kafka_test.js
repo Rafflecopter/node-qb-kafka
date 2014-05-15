@@ -4,7 +4,7 @@ process.on('uncaughtException', function(err) {
   console.error(err.stack);
 });
 process.setMaxListeners(0);
-//require('longjohn')
+require('longjohn')
 
 var _ = require('lodash')
   , kafka = require('kafka-node')
@@ -15,7 +15,7 @@ var qbPkg = require('qb')
 
 var qb1, qb2, qb3;
 
-var connectionString = "localhost:2181"
+var connectionString = process.env.ZK_HOST
 //var connectionString = "dev.raafl.com:2181"
 
 var tests = exports.tests = {};
