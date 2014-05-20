@@ -37,40 +37,43 @@ tests.setUp = function (cb) {
     , prefix: 'qbBasic'
     })
 
-  //qb2 = QB(
-  //  { instance_id: 0
-  //  , num_instances: 2
-  //  , num_partitions: 32
-  //  , commit_interval: 1
-  //  , connection_string: connectionString
-  //  , task_options: { foobar: { topic: "foobar32"
-  //                            , consumer_group: "foobarers"
-  //                            //, key: "foo"
-  //                            }
-  //                  }
-  //  , prefix: 'qbMulti1'
-  //  })
+  qb2 = QB(
+    { instance_id: 0
+    , num_instances: 2
+    , num_partitions: 32
+    , commit_interval: 1
+    , connection_string: connectionString
+    , task_options: { foobar: { topic: "foobar32"
+                              , consumer_group: "foobarers"
+                              //, key: "foo"
+                              }
+                    }
+    , prefix: 'qbMulti1'
+    })
 
-  //qb3 = QB(
-  //  { instance_id: 1
-  //  , num_instances: 2
-  //  , num_partitions: 32
-  //  , commit_interval: 1
-  //  , connection_string: connectionString
-  //  , task_options: { foobar: { topic: "foobar32"
-  //                            , consumer_group: "foobarers"
-  //                            //, key: "foo"
-  //                            }
-  //                  }
-  //  , prefix: 'qbMulti2'
-  //  })
+  qb3 = QB(
+    { instance_id: 1
+    , num_instances: 2
+    , num_partitions: 32
+    , commit_interval: 1
+    , connection_string: connectionString
+    , task_options: { foobar: { topic: "foobar32"
+                              , consumer_group: "foobarers"
+                              //, key: "foo"
+                              }
+                    }
+    , prefix: 'qbMulti2'
+    })
 
   cb()
 }
 
 tests.tearDown = function (cb) {
-  //[qb1,qb2,qb3].forEach(function (qb) { qb.end() })
-  qb1.end(cb.bind(null, null))
+  var qbs = [qb1, qb2, qb3]
+
+  async.each(qbs, function (qb, next) {
+    qb.end(next.bind(null, null))
+  }, cb)
 }
 
 // starting with a "clean" topic (no offset lag) push and process 2 messages
@@ -109,38 +112,38 @@ tests.basic = function (test) {
 
 // In order for this test to pass, a topic called foobar32 
 // needs to be set up with 32 partitions
-//tests.multiPartition = function multiPartition(test) {
-//  var numProcessed = 0
-//    , numToSend = 64
-//
-//  function _process(task, done) {
-//    numProcessed++
-//    done()
-//  }
-//
-//  function _checkFinish() {
-//    if (numProcessed === numToSend) {
-//      return setImmediate(test.done)
-//    } else {
-//      return
-//    }
-//  }
-//
-//  qb2
-//    .on('error', test.ifError)
-//    .can('foobar', _process)
-//    .on('finish', _checkFinish)
-//    .on('ready', test.ifError)
-//    .start()
-//
-//  qb3
-//    .on('error', test.ifError)
-//    .can('foobar', _process)
-//    .on('ready', function () {
-//      for (var k = 0; k < numToSend; k++) {
-//        qb2.push('foobar', {foo: 'bar'}, test.ifError)
-//      }
-//    })
-//    .on('finish', _checkFinish)
-//    .start()
-//}
+tests.multiPartition = function multiPartition(test) {
+  var numProcessed = 0
+    , numToSend = 64
+
+  function _process(task, done) {
+    numProcessed++
+    done()
+  }
+
+  function _checkFinish() {
+    if (numProcessed === numToSend) {
+      return setImmediate(test.done)
+    } else {
+      return
+    }
+  }
+
+  qb2
+    .on('error', test.ifError)
+    .can('foobar', _process)
+    .on('finish', _checkFinish)
+    .on('ready', test.ifError)
+    .start()
+
+  qb3
+    .on('error', test.ifError)
+    .can('foobar', _process)
+    .on('ready', function () {
+      for (var k = 0; k < numToSend; k++) {
+        qb2.push('foobar', {foo: 'bar'}, test.ifError)
+      }
+    })
+    .on('finish', _checkFinish)
+    .start()
+}
