@@ -44,7 +44,7 @@ tests.setUp = function (cb) {
     , commit_interval: 1
     , connection_string: connectionString
     , task_options: { foobar: { topic: "foobar32"
-                              , consumer_group: "foobarers"
+                              , consumer_group: "foobar32ers"
                               //, key: "foo"
                               }
                     }
@@ -58,7 +58,7 @@ tests.setUp = function (cb) {
     , commit_interval: 1
     , connection_string: connectionString
     , task_options: { foobar: { topic: "foobar32"
-                              , consumer_group: "foobarers"
+                              , consumer_group: "foobar32ers"
                               //, key: "foo"
                               }
                     }
@@ -80,32 +80,29 @@ tests.tearDown = function (cb) {
 tests.basic = function (test) {
   //test.expect(10)
   var calledFoobar = 0
-  var calledFoobar2 = 0
+    , calledFoobar2 = 0
+    , m = Math.random().toString(36).replace(/[^a-z]+/g, '')
+
   qb1
     .on('error', test.ifError)
     .can('foobar', function (task, done) {
-      test.equal(task.foo, 'bar')
+      test.equal(task.foo, m)
       calledFoobar++
       setImmediate(done)
     })
     .can('foobar2', function (task, done) {
-      test.equal(task.foo, 'bar')
+      test.equal(task.foo, m)
       calledFoobar2++
       setImmediate(done)
     })
-    .post('process')
-      .use(function (type, task, next) {
-        test.equal(task.foo, 'bar')
-        next()
-      })
     .on('finish', function (type, task, next) {
       if (calledFoobar === 2 && calledFoobar2 === 2) {
         test.done()
       }
     })
     .on('ready', function () {
-      qb1.push('foobar', {foo: 'bar'}, test.ifError)
-      qb1.push('foobar2', {foo: 'bar'}, test.ifError)
+      qb1.push('foobar', {foo: m}, test.ifError)
+      qb1.push('foobar2', {foo: m}, test.ifError)
     })
     .start()
 }
@@ -115,15 +112,22 @@ tests.basic = function (test) {
 tests.multiPartition = function multiPartition(test) {
   var numProcessed = 0
     , numToSend = 64
+    , sentmsgs = []
 
   function _process(task, done) {
     numProcessed++
+
+    test.ok(!!~sentmsgs.indexOf(task.foo), task.foo + " not found in sent messages")
+
     done()
   }
 
-  function _checkFinish() {
+  function _checkFinish(type, task, next) {
     if (numProcessed === numToSend) {
-      return setImmediate(test.done)
+      return setTimeout(function () {
+        test.equal(numToSend, numProcessed)
+        test.done()
+      }, 500)
     } else {
       return
     }
@@ -141,7 +145,11 @@ tests.multiPartition = function multiPartition(test) {
     .can('foobar', _process)
     .on('ready', function () {
       for (var k = 0; k < numToSend; k++) {
-        qb2.push('foobar', {foo: 'bar'}, test.ifError)
+        var m = Math.random().toString(36).replace(/[^a-z]+/g, '')
+
+        sentmsgs.push(m)  
+
+        qb2.push('foobar', {foo: m}, test.ifError)
       }
     })
     .on('finish', _checkFinish)
