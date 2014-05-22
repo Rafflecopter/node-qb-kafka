@@ -8,8 +8,7 @@ require('longjohn')
 
 var async = require('async')
 
-var qbPkg = require('qb')
-  , QB = qbPkg.backend(require('../lib/backend'))
+var QB = require('qb').backend(require('../index').backend)
 
 var qb1, qb2, qb3;
 
