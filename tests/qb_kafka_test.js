@@ -128,7 +128,7 @@ tests.multiPartition = function multiPartition(test) {
         test.done()
       }, 500)
     } else {
-      return
+      return next()
     }
   }
 
